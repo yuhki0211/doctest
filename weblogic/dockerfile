@@ -1,0 +1,25 @@
+FROM centos:6
+COPY oraInst.loc /etc/oraInst.loc
+RUN groupadd oinstall && \
+useradd -G oinstall userv && \
+mkdir -p /u01/app && \
+chown userv:oinstall /u01/app && \
+chown userv:oinstall /etc/oraInst.loc && \
+chmod 664 /etc/oraInst.loc
+
+COPY jdk-8u211-linux-x64.rpm /root/jdk-8u211-linux-x64.rpm
+RUN yum -y localinstall /root/jdk-8u211-linux-x64.rpm
+
+USER userv
+ENV JAVA_HOME /usr/bin/java
+
+COPY --chown=userv:oinstall fmw_12.2.1.3.0_wls.jar /home/userv/fmw_12.2.1.3.0_wls.jar
+COPY --chown=userv:oinstall paramfile /home/userv/paramfile
+COPY --chown=userv:oinstall boot.properties /home/userv/user_projects/domains/bramslm/servers/AdminServer/security/boot.properties
+COPY --chown=userv:oinstall bramslmDomain.py /home/userv/bramslmDomain.py
+
+RUN java -jar ~/fmw_12.2.1.3.0_wls.jar  -silent -responsefile ~/paramfile && \
+source /u01/app/oracle/Middleware/wlserver/server/bin/setWLSEnv.sh && \
+java weblogic.WLST ~/bramslmDomain.py
+
+ENTRYPOINT [ "/home/userv/user_projects/domains/bramslm/startWebLogic.sh" ]

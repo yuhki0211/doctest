@@ -1,0 +1,2 @@
+docker build -t weblogi:1 .
+docker run -it -d -p 7001:7001 --name weblogic weblogic:1
